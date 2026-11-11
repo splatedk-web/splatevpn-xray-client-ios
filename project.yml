@@ -36,13 +36,15 @@ targets:
     platform: iOS
     sources:
       - path: SplateVPNTunnel
+        excludes:
+          - "Info.plist"
+          - "*.entitlements"
     dependencies:
       - target: SplateCore
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.danieldk.splatevpn.tunnel
         INFOPLIST_FILE: SplateVPNTunnel/Info.plist
-        CODE_SIGN_ENTITLEMENTS: SplateVPNTunnel/SplateVPNTunnel.entitlements
         GENERATE_INFOPLIST_FILE: NO
 
   SplateVPN:
@@ -50,6 +52,9 @@ targets:
     platform: iOS
     sources:
       - path: SplateVPN
+        excludes:
+          - "Info.plist"
+          - "*.entitlements"
     dependencies:
       - target: SplateCore
       - target: SplateVPNTunnel
@@ -57,5 +62,4 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.danieldk.splatevpn
         INFOPLIST_FILE: SplateVPN/Info.plist
-        CODE_SIGN_ENTITLEMENTS: SplateVPN/SplateVPN.entitlements
         GENERATE_INFOPLIST_FILE: NO

@@ -1,0 +1,57 @@
+name: SplateVPN
+options:
+  bundleIdPrefix: com.danieldk
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  xcodeVersion: "15.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    TARGETED_DEVICE_FAMILY: "1" # iPhone
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+
+targets:
+  SplateCore:
+    type: framework
+    platform: iOS
+    sources:
+      - path: SplateCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.danieldk.splatevpn.core
+        SKIP_INSTALL: YES
+        DEFINES_MODULE: YES
+
+  SplateVPNTunnel:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: SplateVPNTunnel
+    dependencies:
+      - target: SplateCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.danieldk.splatevpn.tunnel
+        INFOPLIST_FILE: SplateVPNTunnel/Info.plist
+        CODE_SIGN_ENTITLEMENTS: SplateVPNTunnel/SplateVPNTunnel.entitlements
+        GENERATE_INFOPLIST_FILE: NO
+
+  SplateVPN:
+    type: application
+    platform: iOS
+    sources:
+      - path: SplateVPN
+    dependencies:
+      - target: SplateCore
+      - target: SplateVPNTunnel
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.danieldk.splatevpn
+        INFOPLIST_FILE: SplateVPN/Info.plist
+        CODE_SIGN_ENTITLEMENTS: SplateVPN/SplateVPN.entitlements
+        GENERATE_INFOPLIST_FILE: NO

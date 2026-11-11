@@ -1,0 +1,36 @@
+# Xcode
+*.xcodeproj
+*.xcworkspace
+!default.sublime-project
+*.xcuserstate
+project.xcworkspace
+xcuserdata
+*.xcuserdatad
+*.mode1v3
+*.mode2v3
+*.moved-aside
+*.ipa
+*.app
+*.dSYM.zip
+*.dSYM
+
+# Build products
+DerivedData/
+build/
+.build/
+
+# Package Manager
+Packages/
+Package.pins
+Package.resolved
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# macOS
+.DS_Store
+*.swp
+*~

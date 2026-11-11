@@ -198,7 +198,7 @@ public struct PresetCard: View {
 }
 
 public struct SubscriptionCard: View {
-    public let sub: Subscription
+    public let sub: VpnSubscription
     public let onRefresh: () -> Void
     public let onDelete: () -> Void
 

@@ -7,7 +7,7 @@ public final class AppState: ObservableObject {
     @Published public var vpnStatus: VpnStatus = .disconnected
     @Published public var activeServer: ServerNode?
     @Published public var servers: [ServerNode] = []
-    @Published public var subscriptions: [Subscription] = []
+    @Published public var subscriptions: [VpnSubscription] = []
     @Published public var routingMode: RoutingMode = .bypassRu
     @Published public var trafficStats: TrafficStats = TrafficStats()
     @Published public var isUpdatingSubscriptions: Bool = false
@@ -31,22 +31,22 @@ public final class AppState: ObservableObject {
         // If no subscriptions exist, initialize default presets
         if self.subscriptions.isEmpty {
             self.subscriptions = [
-                Subscription(
+                VpnSubscription(
                     id: SplateConstants.presetWhiteCidrId,
                     name: SplateConstants.presetWhiteCidrName,
                     url: SplateConstants.presetWhiteCidrUrl
                 ),
-                Subscription(
+                VpnSubscription(
                     id: SplateConstants.presetHarvesterId,
                     name: SplateConstants.presetHarvesterName,
                     url: SplateConstants.presetHarvesterUrl
                 ),
-                Subscription(
+                VpnSubscription(
                     id: SplateConstants.presetUniversalId,
                     name: SplateConstants.presetUniversalName,
                     url: SplateConstants.presetUniversalUrl
                 ),
-                Subscription(
+                VpnSubscription(
                     id: SplateConstants.presetLteId,
                     name: SplateConstants.presetLteName,
                     url: SplateConstants.presetLteUrl
@@ -134,7 +134,7 @@ public final class AppState: ObservableObject {
     }
 
     public func addSubscription(name: String, url: String) {
-        let sub = Subscription(name: name, url: url)
+        let sub = VpnSubscription(name: name, url: url)
         subscriptions.append(sub)
         storage.saveSubscriptions(subscriptions)
         refreshSubscription(sub)
@@ -159,7 +159,7 @@ public final class AppState: ObservableObject {
         }
     }
 
-    public func refreshSubscription(_ sub: Subscription) {
+    public func refreshSubscription(_ sub: VpnSubscription) {
         guard let url = URL(string: sub.url) else { return }
 
         isUpdatingSubscriptions = true

@@ -93,15 +93,15 @@ public final class AppGroupStorage {
 
     // MARK: - Subscriptions Persistence
 
-    public func saveSubscriptions(_ subs: [Subscription]) {
+    public func saveSubscriptions(_ subs: [VpnSubscription]) {
         if let data = try? JSONEncoder().encode(subs) {
             defaults?.set(data, forKey: Keys.savedSubscriptions)
         }
     }
 
-    public func getSubscriptions() -> [Subscription] {
+    public func getSubscriptions() -> [VpnSubscription] {
         guard let data = defaults?.data(forKey: Keys.savedSubscriptions),
-              let list = try? JSONDecoder().decode([Subscription].self, from: data) else {
+              let list = try? JSONDecoder().decode([VpnSubscription].self, from: data) else {
             return []
         }
         return list

@@ -176,7 +176,7 @@ public struct HomeScreen: View {
     private var ambientGlowColor: Color {
         switch appState.vpnStatus {
         case .connected: return SplateTheme.accentCyan
-        case .connecting: return SplateTheme.accentAmber
+        case .connecting, .disconnecting: return SplateTheme.accentAmber
         case .failed: return SplateTheme.accentCrimson
         case .disconnected: return SplateTheme.primaryBlue
         }

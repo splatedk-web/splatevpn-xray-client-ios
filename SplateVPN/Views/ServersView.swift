@@ -127,7 +127,14 @@ public struct ServersView: View {
                                 .listRowSeparator(.hidden)
                                 .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                             }
-                            .onDelete(perform: appState.deleteServer)
+                            .onDelete { indexSet in
+                                for index in indexSet {
+                                    let server = filteredServers[index]
+                                    if let actualIndex = appState.servers.firstIndex(where: { $0.id == server.id }) {
+                                        appState.deleteServer(at: IndexSet(integer: actualIndex))
+                                    }
+                                }
+                            }
                         }
                         .listStyle(.plain)
                     }

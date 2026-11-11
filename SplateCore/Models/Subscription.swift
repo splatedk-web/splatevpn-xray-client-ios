@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Subscription: Identifiable, Codable, Hashable {
+public struct VpnSubscription: Identifiable, Codable, Hashable {
     public let id: String
     public var name: String
     public var url: String

@@ -43,7 +43,7 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             AD_HOC_CODE_SIGNING_ALLOWED=YES 2>&1 | tee xcodebuild.log || {
-              echo "==================== XCODEBUILD FAILED: PRINTING LAST LOG LINES ===================="
+              echo "==================== XCODEBUILD FAILED: LAST 100 LINES ===================="
               tail -n 100 xcodebuild.log
               exit 1
             }
@@ -62,3 +62,11 @@ jobs:
           name: SplateVPN-iOS-Package
           path: SplateVPN-unsigned.ipa
           retention-days: 14
+
+      - name: Upload Build Log on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-failure-log
+          path: xcodebuild.log
+          retention-days: 7

@@ -30,6 +30,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.danieldk.splatevpn.core
         SKIP_INSTALL: YES
         DEFINES_MODULE: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
 
   SplateVPNTunnel:
     type: app-extension
@@ -46,6 +47,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.danieldk.splatevpn.tunnel
         INFOPLIST_FILE: SplateVPNTunnel/Info.plist
         GENERATE_INFOPLIST_FILE: NO
+        APPLICATION_EXTENSION_API_ONLY: YES
 
   SplateVPN:
     type: application

@@ -30,6 +30,7 @@ jobs:
 
       - name: Build SplateVPN App & Extensions
         run: |
+          set -o pipefail
           xcodebuild clean build \
             -project SplateVPN.xcodeproj \
             -scheme SplateVPN \
@@ -37,11 +38,16 @@ jobs:
             -sdk iphoneos \
             -destination "generic/platform=iOS" \
             -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_ENTITLEMENTS="" \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES
+            AD_HOC_CODE_SIGNING_ALLOWED=YES 2>&1 | tee xcodebuild.log || {
+              echo "==================== XCODEBUILD FAILED: PRINTING ERRORS ===================="
+              grep -E "(error:|fatal error:|\*\* BUILD FAILED \*\*)" xcodebuild.log -B 2 -A 3 || tail -n 120 xcodebuild.log
+              exit 1
+            }
 
       - name: Package Payload into SplateVPN.ipa
         run: |

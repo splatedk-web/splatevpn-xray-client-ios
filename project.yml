@@ -25,9 +25,13 @@ targets:
     platform: iOS
     sources:
       - path: SplateCore
+        excludes:
+          - "Info.plist"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.danieldk.splatevpn.core
+        INFOPLIST_FILE: SplateCore/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
         SKIP_INSTALL: YES
         DEFINES_MODULE: YES
         APPLICATION_EXTENSION_API_ONLY: YES

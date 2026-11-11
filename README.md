@@ -65,7 +65,7 @@ SplateClientiOS/
    git add .
    git commit -m "Initial commit of SplateVPN iOS client"
    git branch -M main
-   git remote add origin https://github.com/ВАШ_ЛОГИН/SplateClientiOS.git
+   git remote add origin https://github.com/splatedk-web/splatevpn-xray-client-ios.git
    git push -u origin main
    ```
 

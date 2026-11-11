@@ -3,7 +3,7 @@ import Foundation
 public enum SplateConstants {
     public static let appGroupId = "group.com.danieldk.splatevpn"
     public static let tunnelBundleId = "com.danieldk.splatevpn.tunnel"
-    public static let repositoryUrl = "https://github.com/splatedk-web/splatevpn-xray-client"
+    public static let repositoryUrl = "https://github.com/splatedk-web/splatevpn-xray-client-ios"
     public static let version = "1.2.8"
 
     // Ports

@@ -8,6 +8,8 @@ final class VPNManager: ObservableObject {
     @Published var state: AppStateSnapshot
     @Published var connectionStatus: NEVPNStatus = .disconnected
     @Published var trafficStats: TrafficStats = .zero
+    @Published var rxBytesPerSec: Int64 = 0
+    @Published var txBytesPerSec: Int64 = 0
     @Published var lastError: String?
     @Published var isImporting = false
     @Published var isPinging = false
@@ -15,6 +17,7 @@ final class VPNManager: ObservableObject {
     private var manager: NETunnelProviderManager?
     private var statusObserver: NSObjectProtocol?
     private var statsTask: Task<Void, Never>?
+    private var previousStats: TrafficStats = .zero
 
     var l10n: L10n {
         L10n(code: state.languageCode)
@@ -382,7 +385,11 @@ final class VPNManager: ObservableObject {
                         return
                     }
                     Task { @MainActor in
-                        self?.trafficStats = decoded
+                        guard let self else { return }
+                        self.txBytesPerSec = max(0, decoded.uplink - self.previousStats.uplink)
+                        self.rxBytesPerSec = max(0, decoded.downlink - self.previousStats.downlink)
+                        self.previousStats = decoded
+                        self.trafficStats = decoded
                     }
                 }
             } catch {

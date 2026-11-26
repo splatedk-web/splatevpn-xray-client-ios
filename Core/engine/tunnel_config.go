@@ -172,6 +172,7 @@ func buildOutbounds(link, fullConfigJSON string) ([]object, string, error) {
 		if !hasBlock {
 			outbounds = append(outbounds, object{"tag": "block", "protocol": "blackhole"})
 		}
+		outbounds = append(outbounds, object{"tag": "dns-out", "protocol": "dns"})
 		return outbounds, serverHost, nil
 	}
 
@@ -190,6 +191,7 @@ func buildOutbounds(link, fullConfigJSON string) ([]object, string, error) {
 		proxy,
 		{"tag": "direct", "protocol": "freedom"},
 		{"tag": "block", "protocol": "blackhole"},
+		{"tag": "dns-out", "protocol": "dns"},
 	}
 	return outbounds, serverHost, nil
 }
@@ -262,7 +264,14 @@ func attachTLSFragment(outbounds []object) []object {
 }
 
 func buildRouting(opts TunnelOptions) object {
-	rules := []object{}
+	rules := []object{
+		{
+			"type":        "field",
+			"inboundTag":  []string{"packet-tunnel"},
+			"port":        "53",
+			"outboundTag": "dns-out",
+		},
+	}
 	mode := strings.ToLower(strings.TrimSpace(opts.RoutingMode))
 	if mode == "" {
 		mode = "bypass_lan"

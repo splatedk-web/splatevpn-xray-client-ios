@@ -13,11 +13,21 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(vpn.l10n.tabSettings)
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundStyle(colors.textPrimary)
+                        Text(isRussian ? "Конфигурация обхода блокировок, оформления и ядра" : "Anti-DPI, appearance and Xray core configuration")
+                            .font(.caption)
+                            .foregroundStyle(colors.textSecondary)
+                    }
+                    .padding(.top, 6)
+
                     HStack(spacing: 10) {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(colors.textSecondary)
-                        TextField(isRussian ? "Поиск настроек…" : "Search settings…", text: $searchQuery)
+                        TextField(isRussian ? "Найти настройку…" : "Search settings…", text: $searchQuery)
                             .foregroundStyle(colors.textPrimary)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
@@ -85,7 +95,7 @@ struct SettingsView: View {
             }
             .scrollContentBackground(.hidden)
             .background(Color.clear)
-            .navigationTitle(vpn.l10n.tabSettings)
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 

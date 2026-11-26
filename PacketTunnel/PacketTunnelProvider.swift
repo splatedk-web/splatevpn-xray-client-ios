@@ -129,21 +129,16 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         if let fd = packetFlow.value(forKeyPath: "socket.fileDescriptor") as? Int32, fd >= 3 {
             return fd
         }
-        var ctlInfo = ctl_info()
-        withUnsafeMutablePointer(to: &ctlInfo.ctl_name) {
-            $0.withMemoryRebound(to: CChar.self, capacity: MemoryLayout.size(ofValue: ctlInfo.ctl_name)) { ptr in
-                _ = strcpy(ptr, "com.apple.net.utun_control")
-            }
-        }
+        // Fallback: scan open descriptors for an AF_SYSTEM (32) utun socket without private headers.
+        var storage = sockaddr_storage()
         for fd: Int32 in 3..<1024 {
-            var addr = sockaddr_ctl()
-            var len = socklen_t(MemoryLayout<sockaddr_ctl>.size)
-            let ok = withUnsafeMutablePointer(to: &addr) {
+            var len = socklen_t(MemoryLayout<sockaddr_storage>.size)
+            let ok = withUnsafeMutablePointer(to: &storage) {
                 $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
                     getpeername(fd, sa, &len) == 0
                 }
             }
-            if ok && addr.sc_family == AF_SYSTEM {
+            if ok && Int32(storage.ss_family) == AF_SYSTEM {
                 return fd
             }
         }

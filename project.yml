@@ -36,6 +36,7 @@ targets:
         embed: true
       - framework: Frameworks/SplateCore.xcframework
         embed: true
+      - sdk: libresolv.tbd
 
   SplateWidget:
     type: app-extension

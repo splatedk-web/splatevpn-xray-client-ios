@@ -17,6 +17,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: Core/go.mod
+          cache-dependency-path: Core/go.sum
       - name: Run Go Core vet & race tests
         working-directory: Core
         run: |
@@ -30,6 +31,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: Core/go.mod
+          cache-dependency-path: Core/go.sum
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Download GeoIP & GeoSite assets

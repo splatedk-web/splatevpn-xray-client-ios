@@ -1,36 +1,33 @@
-# Xcode
-*.xcodeproj
-*.xcworkspace
-!default.sublime-project
-*.xcuserstate
-project.xcworkspace
-xcuserdata
-*.xcuserdatad
-*.mode1v3
-*.mode2v3
-*.moved-aside
-*.ipa
-*.app
-*.dSYM.zip
-*.dSYM
-
-# Build products
+# macOS & Xcode
+.DS_Store
 DerivedData/
 build/
-.build/
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+*.xcuserstate
+*.moved-aside
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+*.mobileprovision
 
-# Package Manager
-Packages/
-Package.pins
-Package.resolved
+# Generated Go XCFramework & GeoData binaries
+Frameworks/
+Resources/*.dat
 
-# Fastlane
-fastlane/report.xml
-fastlane/Preview.html
-fastlane/screenshots
-fastlane/test_output
+# Go build & test artifacts
+Core/*.test
+Core/*.out
+Core/coverage.*
 
-# macOS
-.DS_Store
+# Editors & IDEs
+.idea/
+.vscode/
 *.swp
-*~
+*.swo

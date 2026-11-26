@@ -1,0 +1,12 @@
+﻿{
+  "images" : [
+    {
+      "filename" : "theme_winter_day_environment.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

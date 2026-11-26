@@ -1,0 +1,12 @@
+﻿{
+  "images" : [
+    {
+      "filename" : "theme_pony_characters.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

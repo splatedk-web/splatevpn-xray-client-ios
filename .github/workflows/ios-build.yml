@@ -1,0 +1,67 @@
+name: iOS Build & IPA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  GOTOOLCHAIN: auto
+
+jobs:
+  go-core-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: Core/go.mod
+      - name: Run Go Core vet & race tests
+        working-directory: Core
+        run: |
+          go vet ./...
+          go test -race -v ./...
+
+  ios-ipa-build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: Core/go.mod
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Download GeoIP & GeoSite assets
+        run: |
+          mkdir -p Resources
+          curl -fsSL https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat -o Resources/geoip.dat
+          curl -fsSL https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat -o Resources/geosite.dat
+      - name: Build SplateCore.xcframework
+        run: bash Scripts/build-core-xcframework.sh
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build unsigned iOS app (Release)
+        run: |
+          xcodebuild \
+            -project SplateVPN.xcodeproj \
+            -scheme SplateVPN \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p build/Payload
+          cp -R build/DerivedData/Build/Products/Release-iphoneos/SplateVPN.app build/Payload/
+          cd build
+          zip -r -q SplateVPN-unsigned.ipa Payload
+      - name: Upload SplateVPN-unsigned.ipa artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SplateVPN-unsigned-ipa
+          path: build/SplateVPN-unsigned.ipa
+          retention-days: 14

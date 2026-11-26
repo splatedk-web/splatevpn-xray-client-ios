@@ -58,7 +58,17 @@ struct SplateStatusWidgetView: View {
                 .foregroundStyle(.secondary)
         }
         .padding()
-        .containerBackground(.fill.tertiary, for: .widget)
+        .modifier(WidgetContainerBackgroundModifier())
+    }
+}
+
+private struct WidgetContainerBackgroundModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 17.0, *) {
+            content.containerBackground(.fill.tertiary, for: .widget)
+        } else {
+            content.background(Color(.secondarySystemBackground))
+        }
     }
 }
 

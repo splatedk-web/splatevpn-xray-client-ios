@@ -134,11 +134,45 @@ public struct ResolvedSubscriptionLink: Codable, Equatable {
 }
 
 public enum RoutingMode: String, Codable, CaseIterable, Identifiable {
-    case bypassLan = "bypass_lan"
     case smartRU = "smart_ru"
     case global = "global"
+    case whitelist = "whitelist"
 
     public var id: String { rawValue }
+}
+
+public enum BalancerGoal: String, Codable, CaseIterable, Identifiable {
+    case general = "general"
+    case youtube = "youtube"
+    case gaming = "gaming"
+    case ai = "ai"
+
+    public var id: String { rawValue }
+
+    public var titleRu: String {
+        switch self {
+        case .general: return "Обычный"
+        case .youtube: return "YouTube"
+        case .gaming: return "Игры"
+        case .ai: return "Нейросети"
+        }
+    }
+}
+
+public enum BalancerMetric: String, Codable, CaseIterable, Identifiable {
+    case latency = "latency"
+    case stability = "stability"
+    case speed = "speed"
+
+    public var id: String { rawValue }
+
+    public var titleRu: String {
+        switch self {
+        case .latency: return "Задержка"
+        case .stability: return "Стабильность"
+        case .speed: return "Скорость"
+        }
+    }
 }
 
 public enum PingMode: String, Codable, CaseIterable, Identifiable {
@@ -150,7 +184,10 @@ public enum PingMode: String, Codable, CaseIterable, Identifiable {
 
 public struct TunnelSettings: Codable, Equatable {
     public var mtu: Int = 1400
-    public var routingMode: RoutingMode = .bypassLan
+    public var routingMode: RoutingMode = .smartRU
+    public var autoBalancerEnabled: Bool = true
+    public var balancerGoal: BalancerGoal = .general
+    public var balancerMetric: BalancerMetric = .latency
     public var dnsServer: String = "1.1.1.1"
     public var sniffing: Bool = true
     public var blockQuic: Bool = true

@@ -5,224 +5,290 @@ struct HomeView: View {
     @Environment(\.splateColors) private var colors
 
     @State private var showingQuickPicker = false
-    @State private var toolsExpanded = false
+    @State private var showingRoutingPicker = false
 
     private var l10n: L10n { vpn.l10n }
+
+    private var ringColor: Color {
+        if vpn.isConnected { return colors.accentConnected }
+        if vpn.isTransitioning { return colors.accentAmber }
+        return colors.accentCyan
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 18) {
-                    Spacer(minLength: 10)
+                    // 1. Top Egress Location Pill (exact Android layout)
+                    EgressLocationCard(isConnected: vpn.isConnected)
+                        .padding(.top, 6)
 
+                    // 2. Central Dark Glass Power Button with Concentric Rings
                     Button {
                         Task { await vpn.toggleConnection() }
                     } label: {
                         ZStack {
+                            // Outer subtle halo
                             Circle()
-                                .stroke(
-                                    (vpn.isConnected ? colors.accentConnected : colors.accentCyan).opacity(0.28),
-                                    lineWidth: 10
-                                )
-                                .frame(width: 196, height: 196)
+                                .stroke(ringColor.opacity(vpn.isConnected ? 0.22 : 0.14), lineWidth: 1.5)
+                                .frame(width: 214, height: 214)
 
+                            // Middle thin concentric ring
                             Circle()
-                                .fill(buttonGradient)
-                                .frame(width: 172, height: 172)
-                                .shadow(
-                                    color: (vpn.isConnected ? colors.accentConnected : colors.accentCyan).opacity(0.45),
-                                    radius: 26,
-                                    y: 8
+                                .stroke(ringColor.opacity(vpn.isConnected ? 0.45 : 0.25), lineWidth: 2)
+                                .frame(width: 194, height: 194)
+
+                            // Inner dark glass circle with specular rim
+                            Circle()
+                                .fill(
+                                    RadialGradient(
+                                        colors: [
+                                            ringColor.opacity(vpn.isConnected ? 0.26 : 0.14),
+                                            colors.backgroundDeep.opacity(0.92),
+                                            Color.black.opacity(0.95)
+                                        ],
+                                        center: .center,
+                                        startRadius: 8,
+                                        endRadius: 92
+                                    )
                                 )
+                                .frame(width: 172, height: 172)
                                 .overlay(
                                     Circle()
-                                        .strokeBorder(colors.glassBorderLight, lineWidth: 1.5)
+                                        .strokeBorder(
+                                            LinearGradient(
+                                                colors: [ringColor.opacity(0.75), colors.glassBorderDark],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 1.5
+                                        )
                                 )
+                                .shadow(color: ringColor.opacity(vpn.isConnected ? 0.38 : 0.18), radius: 28)
 
-                            VStack(spacing: 8) {
-                                Image(systemName: vpn.isConnected ? "power" : "shield.fill")
-                                    .font(.system(size: 46, weight: .semibold))
-                                Text(vpn.isConnected ? l10n.disconnect : l10n.connect)
-                                    .font(.headline)
+                            VStack(spacing: 12) {
+                                Image(systemName: "shield.fill")
+                                    .font(.system(size: 46, weight: .medium))
+                                    .foregroundStyle(ringColor)
+                                    .shadow(color: ringColor.opacity(0.55), radius: 12)
+
+                                HStack(spacing: 5) {
+                                    Circle()
+                                        .fill(ringColor)
+                                        .frame(width: 5, height: 5)
+                                    Text(vpn.statusLabel.uppercased())
+                                        .font(.system(size: 11, weight: .bold))
+                                        .tracking(1.6)
+                                        .foregroundStyle(colors.textPrimary.opacity(0.92))
+                                }
                             }
-                            .foregroundStyle(colors.onAccent)
                         }
                     }
-                    .buttonStyle(ElasticButtonStyle(targetScale: 0.94))
+                    .buttonStyle(ElasticButtonStyle(targetScale: 0.95))
                     .disabled(vpn.isTransitioning)
-                    .accessibilityLabel(vpn.isConnected ? l10n.disconnect : l10n.connect)
+                    .padding(.vertical, 8)
 
-                    Text(vpn.statusLabel)
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(vpn.isConnected ? colors.accentConnected : colors.textSecondary)
+                    if let error = vpn.lastError {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(colors.accentCrimson)
+                            .multilineTextAlignment(.center)
+                            .padding(12)
+                            .frame(maxWidth: .infinity)
+                            .liquidGlass(cornerRadius: 14, accentBorder: colors.accentCrimson)
+                    }
 
+                    // 3. Section Header: "Активный сервер" + "⚡ авто: вкл" pill
+                    HStack {
+                        Text("Активный сервер")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(colors.textSecondary)
+                        Spacer()
+                        Button {
+                            vpn.updateSettings { $0.autoBalancerEnabled.toggle() }
+                        } label: {
+                            HStack(spacing: 5) {
+                                Image(systemName: "bolt.fill")
+                                    .font(.caption2)
+                                Text(vpn.state.settings.autoBalancerEnabled ? "авто: вкл" : "авто: выкл")
+                                    .font(.caption.weight(.semibold))
+                            }
+                            .foregroundStyle(vpn.state.settings.autoBalancerEnabled ? colors.accentCyan : colors.textSecondary)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 7)
+                            .liquidGlass(cornerRadius: 14, accentBorder: vpn.state.settings.autoBalancerEnabled ? colors.accentCyan.opacity(0.45) : nil)
+                        }
+                        .buttonStyle(ElasticButtonStyle())
+                    }
+
+                    // 4. Two Half-Width Glass Cards: "Для чего" & "Подбор по"
+                    HStack(spacing: 12) {
+                        Menu {
+                            ForEach(BalancerGoal.allCases) { goal in
+                                Button(goal.titleRu) {
+                                    vpn.updateSettings { $0.balancerGoal = goal }
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "target")
+                                    .font(.subheadline)
+                                    .foregroundStyle(colors.accentCyan)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Для чего")
+                                        .font(.caption2)
+                                        .foregroundStyle(colors.textSecondary)
+                                    Text(vpn.state.settings.balancerGoal.titleRu)
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(colors.textPrimary)
+                                        .lineLimit(1)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.down")
+                                    .font(.caption2)
+                                    .foregroundStyle(colors.textSecondary)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
+                            .liquidGlass(cornerRadius: 18)
+                        }
+
+                        Menu {
+                            ForEach(BalancerMetric.allCases) { metric in
+                                Button(metric.titleRu) {
+                                    vpn.updateSettings { $0.balancerMetric = metric }
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "speedometer")
+                                    .font(.subheadline)
+                                    .foregroundStyle(colors.accentCyan)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Подбор по")
+                                        .font(.caption2)
+                                        .foregroundStyle(colors.textSecondary)
+                                    Text(vpn.state.settings.balancerMetric.titleRu)
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(colors.textPrimary)
+                                        .lineLimit(1)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.down")
+                                    .font(.caption2)
+                                    .foregroundStyle(colors.textSecondary)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
+                            .liquidGlass(cornerRadius: 18)
+                        }
+                    }
+
+                    // 5. Large Active Server Card (exact Android layout)
                     if let selected = vpn.state.selectedServer {
                         Button {
                             showingQuickPicker = true
                         } label: {
-                            VStack(spacing: 6) {
-                                HStack {
-                                    Text(selected.protocolName.uppercased())
-                                        .font(.caption2.bold())
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 3)
-                                        .background(colors.protocolColor(selected.protocolName).opacity(0.18), in: Capsule())
-                                        .foregroundStyle(colors.protocolColor(selected.protocolName))
+                            HStack(spacing: 14) {
+                                Image(systemName: "server.rack")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundStyle(colors.protocolColor(selected.protocolName))
+                                    .frame(width: 44, height: 44)
+                                    .background(
+                                        colors.protocolColor(selected.protocolName).opacity(0.18),
+                                        in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    )
 
+                                VStack(alignment: .leading, spacing: 4) {
                                     Text(selected.name)
-                                        .font(.headline)
+                                        .font(.subheadline.weight(.bold))
                                         .foregroundStyle(colors.textPrimary)
-                                        .lineLimit(1)
-
-                                    Spacer()
-
-                                    if let ping = selected.pingMs {
-                                        Text("\(ping) ms")
-                                            .font(.caption.monospacedDigit().weight(.semibold))
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 3)
-                                            .background(pingColor(ping).opacity(0.18), in: Capsule())
-                                            .foregroundStyle(pingColor(ping))
-                                    }
-
-                                    Image(systemName: "chevron.up.chevron.down")
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.leading)
+                                    Text("\(selected.protocolName.uppercased()) • \(selected.network.uppercased())")
                                         .font(.caption)
-                                        .foregroundStyle(colors.textTertiary)
+                                        .foregroundStyle(colors.textSecondary)
+                                        .lineLimit(1)
                                 }
-                                Text(selected.displaySubtitle)
-                                    .font(.caption)
+
+                                Spacer()
+
+                                if let ping = selected.pingMs {
+                                    Text("\(ping) ms")
+                                        .font(.caption.monospacedDigit().weight(.semibold))
+                                        .foregroundStyle(pingColor(ping))
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 6)
+                                        .background(colors.surfaceElevated.opacity(0.7), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                }
+
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
                                     .foregroundStyle(colors.textSecondary)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .lineLimit(1)
                             }
                             .padding(16)
-                            .liquidGlass(cornerRadius: 20, accentBorder: vpn.isConnected ? colors.accentConnected : nil)
+                            .liquidGlass(cornerRadius: 22, accentBorder: vpn.isConnected ? colors.accentConnected.opacity(0.55) : nil)
                         }
                         .buttonStyle(ElasticButtonStyle())
-                        .padding(.horizontal, 16)
                     } else {
                         Text(l10n.noServerSelected)
                             .font(.footnote)
                             .foregroundStyle(colors.textSecondary)
                             .multilineTextAlignment(.center)
                             .padding(16)
-                            .liquidGlass(cornerRadius: 18)
-                            .padding(.horizontal, 16)
+                            .frame(maxWidth: .infinity)
+                            .liquidGlass(cornerRadius: 20)
                     }
 
-                    EgressLocationCard(isConnected: vpn.isConnected)
-                        .padding(.horizontal, 16)
-
+                    // 6. Traffic Stats Row when connected
                     if vpn.isConnected {
-                        HStack(spacing: 14) {
+                        HStack(spacing: 12) {
                             statCard(title: l10n.uploaded, bytes: vpn.trafficStats.uplink, icon: "arrow.up.circle.fill")
                             statCard(title: l10n.downloaded, bytes: vpn.trafficStats.downlink, icon: "arrow.down.circle.fill")
                         }
-                        .padding(.horizontal, 16)
                     }
 
-                    connectionToolsCard
+                    // 7. Bottom Routing Bar ("Умный маршрут | Изменить >")
+                    Button {
+                        showingRoutingPicker = true
+                    } label: {
+                        HStack {
+                            Text(l10n.routingTitle(vpn.state.settings.routingMode))
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(colors.textPrimary)
+                            Spacer()
+                            HStack(spacing: 4) {
+                                Text("Изменить")
+                                    .font(.caption.weight(.semibold))
+                                Image(systemName: "chevron.right")
+                                    .font(.caption2.weight(.semibold))
+                            }
+                            .foregroundStyle(colors.accentCyan)
+                        }
                         .padding(.horizontal, 16)
-
-                    if let error = vpn.lastError {
-                        Text(error)
-                            .font(.footnote)
-                            .foregroundStyle(colors.accentCrimson)
-                            .multilineTextAlignment(.center)
-                            .padding(12)
-                            .liquidGlass(cornerRadius: 14, accentBorder: colors.accentCrimson)
-                            .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                        .liquidGlass(cornerRadius: 18)
                     }
+                    .buttonStyle(ElasticButtonStyle())
                 }
+                .padding(.horizontal, 16)
                 .padding(.bottom, 28)
             }
             .scrollContentBackground(.hidden)
             .background(Color.clear)
-            .navigationTitle("SplateVPN")
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showingQuickPicker) {
                 QuickServerPickerSheet()
             }
-        }
-    }
-
-    private var connectionToolsCard: some View {
-        VStack(spacing: 12) {
-            Button {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                    toolsExpanded.toggle()
-                }
-            } label: {
-                HStack {
-                    Label("Инструменты соединения", systemImage: "wrench.and.screwdriver")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(colors.textPrimary)
-                    Spacer()
-                    Image(systemName: toolsExpanded ? "chevron.up" : "chevron.down")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(colors.accentCyan)
-                }
-            }
-
-            if toolsExpanded {
-                Divider().overlay(colors.borderSubtle)
-
-                Picker(l10n.routingSection, selection: Binding(
-                    get: { vpn.state.settings.routingMode },
-                    set: { mode in vpn.updateSettings { $0.routingMode = mode } }
-                )) {
-                    ForEach(RoutingMode.allCases) { mode in
-                        Text(l10n.routingTitle(mode)).tag(mode)
+            .confirmationDialog("Режим маршрутизации", isPresented: $showingRoutingPicker, titleVisibility: .visible) {
+                ForEach(RoutingMode.allCases) { mode in
+                    Button(l10n.routingTitle(mode)) {
+                        vpn.updateSettings { $0.routingMode = mode }
                     }
                 }
-                .pickerStyle(.menu)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                HStack(spacing: 10) {
-                    if vpn.state.servers.count > 1 {
-                        Button {
-                            Task { await vpn.pingAllServers(autoSelectFastest: true) }
-                        } label: {
-                            HStack(spacing: 6) {
-                                if vpn.isPinging {
-                                    ProgressView().controlSize(.small)
-                                } else {
-                                    Image(systemName: "bolt.horizontal.circle")
-                                }
-                                Text(l10n.autoSelectFastest)
-                            }
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(colors.accentCyan)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .liquidGlass(cornerRadius: 12, accentBorder: colors.accentCyan.opacity(0.45))
-                        }
-                        .buttonStyle(ElasticButtonStyle())
-                        .disabled(vpn.isPinging)
-                    }
-
-                    NavigationLink {
-                        LogsView()
-                    } label: {
-                        Label(l10n.logsTitle, systemImage: "doc.text.magnifyingglass")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(colors.textPrimary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .liquidGlass(cornerRadius: 12)
-                    }
-                    .buttonStyle(ElasticButtonStyle())
-                }
+                Button(l10n.cancel, role: .cancel) {}
             }
         }
-        .padding(14)
-        .liquidGlass(cornerRadius: 18)
-    }
-
-    private var buttonGradient: LinearGradient {
-        if vpn.isConnected {
-            return LinearGradient(colors: [colors.accentConnected, colors.accentEmerald], startPoint: .topLeading, endPoint: .bottomTrailing)
-        }
-        return LinearGradient(colors: [colors.accentCyan, colors.accentSecondary], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
     private func pingColor(_ ms: Int) -> Color {
@@ -241,7 +307,7 @@ struct HomeView: View {
                 .foregroundStyle(colors.textPrimary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
+        .padding(.vertical, 10)
         .liquidGlass(cornerRadius: 16)
     }
 }

@@ -1,11 +1,37 @@
 import Foundation
 
 public enum AppGroup {
-    public static let identifier = "group.com.danieldk.splatevpn"
-    public static let tunnelBundleIdentifier = "com.danieldk.splatevpn.PacketTunnel"
+    private static let fallbackGroup = "group.com.danieldk.splatevpn"
+
+    /// Base host app bundle identifier (strips `.PacketTunnel` / `.Widget` suffix when called from an extension).
+    public static var hostBundleIdentifier: String {
+        let raw = Bundle.main.bundleIdentifier ?? "com.danieldk.splatevpn"
+        for suffix in [".PacketTunnel", ".Widget", ".SplateWidget"] {
+            if raw.hasSuffix(suffix) {
+                return String(raw.dropLast(suffix.count))
+            }
+        }
+        return raw
+    }
+
+    public static var tunnelBundleIdentifier: String {
+        "\(hostBundleIdentifier).PacketTunnel"
+    }
+
+    /// Resolves the active App Group container dynamically so re-signed IPAs work with their own group ID.
+    public static var identifier: String {
+        let dynamicGroup = "group.\(hostBundleIdentifier)"
+        if FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: dynamicGroup) != nil {
+            return dynamicGroup
+        }
+        return fallbackGroup
+    }
 
     public static var containerURL: URL {
         if let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier) {
+            return url
+        }
+        if let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: fallbackGroup) {
             return url
         }
         return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]

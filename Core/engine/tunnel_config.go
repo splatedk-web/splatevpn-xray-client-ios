@@ -352,10 +352,14 @@ func buildRouting(opts TunnelOptions) object {
 		}
 	}
 
+	defaultOutbound := "proxy"
+	if mode == "whitelist" {
+		defaultOutbound = "direct"
+	}
 	rules = append(rules, object{
 		"type":        "field",
 		"network":     "tcp,udp",
-		"outboundTag": "proxy",
+		"outboundTag": defaultOutbound,
 	})
 
 	return object{

@@ -78,9 +78,9 @@ public struct L10n {
     // Routing
     public func routingTitle(_ mode: RoutingMode) -> String {
         switch mode {
-        case .bypassLan: return t(ru: "Обход локальной сети (LAN)", en: "Bypass LAN", fa: "عبور شبکه محلی (LAN)", zh: "绕过局域网 (LAN)")
-        case .smartRU: return t(ru: "Умный маршрут (РФ напрямую)", en: "Smart routing (RU direct)", fa: "مسیریابی هوشمند (RU مستقیم)", zh: "智能分流 (RU 直连)")
-        case .global: return t(ru: "Весь трафик через VPN", en: "Global VPN", fa: "تمام ترافیک از VPN", zh: "全局代理")
+        case .smartRU: return t(ru: "Умный маршрут", en: "Smart routing", fa: "مسیریابی هوشمند", zh: "智能分流")
+        case .global: return t(ru: "Весь трафик", en: "All traffic (Global)", fa: "تمام ترافیک", zh: "全局代理")
+        case .whitelist: return t(ru: "Только через VPN", en: "VPN only (Whitelist)", fa: "فقط لیست سفید", zh: "仅白名单代理")
         }
     }
 

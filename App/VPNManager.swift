@@ -25,7 +25,7 @@ final class VPNManager: ObservableObject {
         AssetInstaller.installBundledGeoAssetsIfNeeded()
         AppLogger.shared.log("App launched (servers=\(state.servers.count), lang=\(state.languageCode))", source: "App")
         Task {
-            await loadTunnelManager()
+            _ = await loadTunnelManager()
         }
     }
 
@@ -114,12 +114,19 @@ final class VPNManager: ObservableObject {
         AppLogger.shared.log("Restored backup (servers=\(restored.servers.count))", source: "Backup")
     }
 
-    func loadTunnelManager() async {
+    func loadTunnelManager() async -> Error? {
         do {
             let managers = try await NETunnelProviderManager.loadAllFromPreferences()
             if let existing = managers.first(where: {
                 ($0.protocolConfiguration as? NETunnelProviderProtocol)?.providerBundleIdentifier == AppGroup.tunnelBundleIdentifier
-            }) {
+            }) ?? managers.first {
+                if let proto = existing.protocolConfiguration as? NETunnelProviderProtocol,
+                   proto.providerBundleIdentifier != AppGroup.tunnelBundleIdentifier {
+                    proto.providerBundleIdentifier = AppGroup.tunnelBundleIdentifier
+                    existing.protocolConfiguration = proto
+                    try await existing.saveToPreferences()
+                    try await existing.loadFromPreferences()
+                }
                 self.manager = existing
             } else {
                 let created = NETunnelProviderManager()
@@ -135,9 +142,10 @@ final class VPNManager: ObservableObject {
             }
             attachStatusObserver()
             syncStatus()
+            return nil
         } catch {
-            lastError = error.localizedDescription
-            AppLogger.shared.log("loadTunnelManager error: \(error.localizedDescription)", source: "App", level: "ERROR")
+            AppLogger.shared.log("loadTunnelManager error: \(error.localizedDescription) (bundle=\(AppGroup.tunnelBundleIdentifier))", source: "App", level: "ERROR")
+            return error
         }
     }
 
@@ -159,10 +167,18 @@ final class VPNManager: ObservableObject {
         do {
             try persistState()
             if manager == nil {
-                await loadTunnelManager()
+                if let initError = await loadTunnelManager() {
+                    let ns = initError as NSError
+                    if ns.domain == NEVPNErrorDomain && (ns.code == NEVPNError.configurationReadWriteFailed.rawValue || ns.code == NEVPNError.configurationInvalid.rawValue) {
+                        lastError = "Нет права NetworkExtension в сертификате подписи (для VPN нужен сертификат с NetworkExtension или TrollStore). Детали: \(initError.localizedDescription)"
+                    } else {
+                        lastError = "Не удалось создать VPN-профиль: \(initError.localizedDescription)"
+                    }
+                    return
+                }
             }
             guard let manager else {
-                lastError = "VPN profile is not initialized"
+                lastError = "Не удалось инициализировать NETunnelProviderManager (\(AppGroup.tunnelBundleIdentifier))"
                 return
             }
             if !manager.isEnabled {
